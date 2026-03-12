@@ -1324,9 +1324,11 @@ class PymooOptimizer(Optimizer):
         """
         # setup the algorithm with the problem
         self.problem = problem
-        if self.problem.n_obj > self.max_obj:
+        if len(self.problem.n_obj > 1) and (not self.multi_obj):
             raise ValueError(
-                f"Maximum number of objectives for {type(self.algorithm)} = {self.max_obj} exceeds the number of problem objectives = {self.problem.n_obj}"
+                "Single objective optimizers cannot be used for problems "
+                f"with multiple objectives (here: {self.problem.n_obj}). "
+                "Use a multi-objective optimizer instead."
             )
         self.algorithm.setup(
             problem,
@@ -1384,7 +1386,7 @@ class PymooOptimizer(Optimizer):
 
 
 class CMAESOptimizer(PymooOptimizer):
-    max_obj = 1
+    multi_obj = False
     def __init__(
         self,
         popsize,
@@ -1483,9 +1485,8 @@ class CMAESOptimizer(PymooOptimizer):
         else:
             self.algorithm.options["BoundaryHandler"] = cma.BoundTransform
 
-
 class NSGA2Optimizer(PymooOptimizer):
-    max_obj = 3
+    multi_obj = True
     def __init__(self, popsize, algorithm_kws={}, **kwargs):
         """
         Non-dominated Sorting Genetic Algorithm II (NSGA-II) optimizer
@@ -1502,6 +1503,7 @@ class NSGA2Optimizer(PymooOptimizer):
         super().__init__(**kwargs)
         self.popsize = popsize
         self.algorithm = NSGA2(pop_size=popsize, **algorithm_kws)
+
 
 def batch_optimize(optimizers, problems, save=True, setup_kwargs={}):
     """
