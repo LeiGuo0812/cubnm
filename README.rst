@@ -22,6 +22,9 @@
 .. image:: https://img.shields.io/github/license/amnsbr/cubnm
   :target: ./LICENSE
 
+.. image:: https://img.shields.io/badge/JuRSE_Code_Pick-June_2026-blue
+  :target: https://www.fz-juelich.de/en/rse/community-initiatives/jurse-code-of-the-month/june-2026
+
 .. badges-end
 
 cuBNM toolbox is designed for efficient brain network modeling on GPUs. 
