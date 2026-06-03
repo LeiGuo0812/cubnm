@@ -200,3 +200,13 @@ In addition, please cite the original papers for the BNMs and optimization algor
 
 .. citation-end
 
+AI Usage Disclosure
+--------------------
+
+The majority of the code and documentation in this repository is human-authored. Up to and including 
+v0.1.0, AI use was limited to conversational assistance (coding questions, research, and
+language editing of documentation). After v0.1.0, the scope of AI involvement has broadened. 
+New code is often *AI-assisted* (human-authored with AI editing and refinement) 
+and occasionally *AI-generated* (produced primarily by AI from human prompts and subsequently reviewed by a human),
+primarily via Cursor and Claude Code.  Tests are always hand-written. 
+Human oversight and responsibility for all code remains with the authors.
