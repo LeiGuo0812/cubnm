@@ -223,8 +223,15 @@ __global__ void bnm(
     // but keep the less frequently used variables on heap, while handling zero size
     int* _ext_int = (Model::n_ext_int > 0) ? (int*)malloc(Model::n_ext_int * sizeof(int)) : NULL;
     bool* _ext_bool = (Model::n_ext_bool > 0) ? (bool*)malloc(Model::n_ext_bool * sizeof(bool)) : NULL;
-    int* _ext_int_shared = (int*)_shared_mem;
-    bool* _ext_bool_shared = (bool*)(_shared_mem + Model::n_ext_int_shared*sizeof(int));
+    char* _shared_mem_bytes = reinterpret_cast<char*>(_shared_mem);
+    const size_t shared_header_bytes =
+        Model::n_ext_int_shared * sizeof(int) +
+        Model::n_ext_bool_shared * sizeof(bool);
+    const size_t shared_header_aligned =
+        ((shared_header_bytes + sizeof(double) - 1) / sizeof(double)) * sizeof(double);
+    int* _ext_int_shared = reinterpret_cast<int*>(_shared_mem_bytes);
+    bool* _ext_bool_shared = reinterpret_cast<bool*>(
+        _shared_mem_bytes + Model::n_ext_int_shared * sizeof(int));
     // initialize model
     model->init(
         _state_vars, _intermediate_vars,
@@ -259,7 +266,8 @@ __global__ void bnm(
     // store immediate history of conn_state_var on extern shared memory
     // the memory is allocated dynamically based on the number of nodes
     // (see https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/)
-    double *_conn_state_var_1 = (double*)(_shared_mem + Model::n_ext_int_shared*sizeof(int)+Model::n_ext_bool_shared*sizeof(bool));
+    double *_conn_state_var_1 = reinterpret_cast<double*>(
+        _shared_mem_bytes + shared_header_aligned);
     double *conn_state_var_1;
     if (!(has_delay)) {
         // conn_state_var_1 is only used when
@@ -683,8 +691,11 @@ void _run_simulations_gpu(
     // delay this array is not needed. And with large number of
     // nodes there will be not enough shared memory available.
     size_t shared_mem_extern{0};
-    shared_mem_extern += Model::n_ext_int_shared * sizeof(int) 
-        + Model::n_ext_bool_shared * sizeof(bool);
+    const size_t shared_header_bytes =
+        Model::n_ext_int_shared * sizeof(int) +
+        Model::n_ext_bool_shared * sizeof(bool);
+    shared_mem_extern +=
+        ((shared_header_bytes + sizeof(double) - 1) / sizeof(double)) * sizeof(double);
     if ((!has_delay) && (d_model->nodes <= MAX_NODES_REG)) {
         shared_mem_extern += d_model->nodes*sizeof(double);
     }

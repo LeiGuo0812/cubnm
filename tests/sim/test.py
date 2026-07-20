@@ -19,6 +19,38 @@ def no_gpu():
     # to skip GPU-dependent tests
     return avail_gpus()==0
 
+
+@pytest.mark.skipif(no_gpu(), reason="No GPU available")
+def test_rww_gpu_shared_memory_alignment():
+    """Exercise a node count that exposed an unaligned shared-memory layout."""
+    nodes = 90
+    sc = np.full((nodes, nodes), 0.01 * nodes / (nodes - 1), dtype=float)
+    np.fill_diagonal(sc, 0.0)
+    sg = sim.rWWSimGroup(
+        duration=3.0,
+        TR=1.0,
+        sc=sc,
+        sc_dist=None,
+        dt="1.0",
+        bw_dt="1.0",
+        do_fc=True,
+        do_fcd=False,
+        bold_remove_s=0.0,
+        sim_seed=410,
+        max_fic_trials=0,
+        force_gpu=True,
+        gof_terms=["+fc_corr"],
+    )
+    sg.N = 1
+    sg.param_lists["G"] = np.array([0.5])
+    sg.param_lists["w_p"] = np.full((1, nodes), 1.25)
+    sg.param_lists["J_N"] = np.full((1, nodes), 0.15)
+    sg._set_default_params(missing=True)
+    sg.run()
+
+    assert sg.sim_bold.shape == (1, 3, nodes)
+    assert np.isfinite(sg.sim_bold).all()
+
 def get_test_params(cpu_gpu_identity=False):
     """
     Get all possible test parameters for all the models
